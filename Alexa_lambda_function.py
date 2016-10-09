@@ -8,16 +8,16 @@ GET_URL = "http://chefalexa-api-dev.us-east-1.elasticbeanstalk.com/harambe/extra
 
 #------------------Unique Responses----------------------------------------------
 OPEN = [
-	"Chef Alexa is in the house!",
-	"Hungry?",
-	"It's cooking time!",
-	"Who's ready for some quality cooking?"
+    "Chef Alexa is in the house!",
+    "Hungry?",
+    "It's cooking time!",
+    "Who's ready for some quality cooking?"
 ]
 
 QUESTION = [
-	"What would you like to make?",
-	"What do you fancy making?",
-	"What are you thinking of making?"
+    "What would you like to make?",
+    "What do you fancy making?",
+    "What are you thinking of making?"
 ]
 
 
@@ -31,14 +31,14 @@ def get_welcome_response():
 
     session_attributes = {'food' : 'water', 'ingredients' : 'none'}
     card_title = "Welcome"
-    speech_output = ' '.join([ran(OPEN),ran(QUESTION)])
+    speech_output = "<speak>" + ' '.join([ran(OPEN),ran(QUESTION)]) + "</speak>"
     reprompt_text = "Answer me!"
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, False))
 
 def handle_session_end_request():
     card_title = "Session Ended"
-    speech_output = "I guess you weren't worthy of being a chef anyways."
+    speech_output = "<speak>I guess you weren't worthy of being a chef anyways.</speak>"
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
     return build_response({}, build_speechlet_response(
@@ -51,37 +51,38 @@ def get_recipe(session):
     data = json.load(response)
     response.close()
     session['attributes']['ingredients'] = data['ingredients']
-    return "Ingredients:" + data['ingredients'] + ". Instructions:" + data['instructions']
+    return "<speak>Ingredients: <break time='1s'/>" + data['ingredients'] + "<break time='2s'/> Instructions: <break time='1s'/>" + data['instructions'] + " <break time='2s'/>Here are some other recipes similar to the one you asked for: <break time='1s'/>" + data['recipes'] + " <break time='1s'/>To learn these recipes, please ask again!</speak>"
+
 
 def set_Food(foodName, session):
     wholeName = foodName.split(' ')
     underScore = ''
     for i in range(len(wholeName)):
         underScore = underScore + wholeName[i] + '_'
-	session['attributes']['food'] = underScore[:-1]
+    session['attributes']['food'] = underScore[:-1]
 
 def decide_Specific(intent, session):
-	card_title = intent['name']
-	session_attributes=session['attributes']
-	should_end_session = False
-	theChoice = intent['slots']['Item']['value']
+    card_title = intent['name']
+    session_attributes=session['attributes']
+    should_end_session = False
+    theChoice = intent['slots']['Item']['value']
 
-	if theChoice in ["meat","vegetable","soup","chicken","beef","pork","fish","salad","pizza"]:
-		speech_output = theChoice + " sounds too vague. Could you please be more specific?"
-		reprompt_text = "You suck."
-	elif theChoice in ["yes","yeah","correct","that's right","yup"]:
-		speech_output = get_recipe(session)
-		reprompt_text = "You suck."
-		should_end_session = True
-	elif theChoice in ["no","nah","nope","no I didn't","that's wrong","wrong","that's not right","that is wrong","incorrect"]:
-		speech_output = "Please say it more clearly."
-		reprompt_text = "You suck."
-	else:
-		set_Food(theChoice,session)
-		speech_output = "Did you say you want to make " + theChoice + "?"
-		reprompt_text = "Try again later."
-	return build_response(session_attributes, build_speechlet_response(
-		card_title, speech_output, reprompt_text, should_end_session))
+    if theChoice in ["meat","vegetable","soup","chicken","beef","pork","fish","salad","pizza","curry","smoothie","noodle","sandwich","burger","dessert","bread","casserole","pasta"]:
+        speech_output = "<speak>" + theChoice + " sounds too vague. Could you please be more specific? </speak>"
+        reprompt_text = "You suck."
+    elif theChoice in ["yes","yeah","correct","that's right","yup","yep","sure","duh"]:
+        speech_output = get_recipe(session)
+        reprompt_text = "You suck."
+        should_end_session = True
+    elif theChoice in ["no","nah","nope","no I didn't","that's wrong","wrong","that's not right","that is wrong","incorrect"]:
+        speech_output = "<speak>Please say it more clearly.</speak>"
+        reprompt_text = "You suck."
+    else:
+        set_Food(theChoice,session)
+        speech_output = "<speak>Did you say you want to make " + theChoice + "?</speak>"
+        reprompt_text = "Try again later."
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
 
 # Starting--------------------------------------------------------------------------
 
@@ -99,8 +100,8 @@ def on_launch(launch_request, session):
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
     return {
         'outputSpeech': {
-            'type': 'PlainText',
-            'text': output
+            'type': 'SSML',
+            'ssml': output
         },
         'card': {
             'type': 'Simple',
@@ -134,11 +135,11 @@ def on_intent(intent_request, session):
     intent = intent_request['intent']
     intent_name = intent_request['intent']['name']
     if intent_name == "Decision":
-    	return decide_Specific(intent, session)
+        return decide_Specific(intent, session)
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
         return handle_session_end_request()
     else:
-    	raise ValueError("Invalid intent")
+        raise ValueError("Invalid intent")
 
 
 #Session End---------------------------------------------------------------------------------

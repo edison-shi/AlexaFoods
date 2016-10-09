@@ -1,8 +1,9 @@
 from __future__ import print_function
 from random import choice as ran
 import urllib2
+import json
 
-GET_URL = "http://api-khe-dev.us-east-1.elasticbeanstalk.com/api/edison?hashtag="
+GET_URL = "http://api-khe-dev.us-east-1.elasticbeanstalk.com/api/emojidata?query=H"
 
 #------------------Unique Responses----------------------------------------------
 OPEN = [
@@ -46,9 +47,10 @@ def get_Tweet_Results(tagName):
     url = GET_URL + tagName
     request = urllib2.Request(url)
     response = urllib2.urlopen(request)
-    page = response.read()
+    data = json.load(response)
+    #page = response.read()
     response.close()
-    return page
+    return data['summary'] + ' ' + data['message']
 
 def find_Result(intent, session):
     card_title = intent['name']
